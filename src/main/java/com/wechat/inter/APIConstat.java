@@ -15,4 +15,6 @@ public interface APIConstat {
 
     public static String WEB_WX_SYNC = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync";
 
+    public static String GET_CONTACT = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact";
+
 }

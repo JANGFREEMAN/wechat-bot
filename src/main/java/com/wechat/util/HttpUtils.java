@@ -25,9 +25,9 @@ import java.util.Map;
 public class HttpUtils {
 
     //http客户端
-    private static CloseableHttpClient httpClient ;
+    public static CloseableHttpClient httpClient ;
 
-    private static HttpClientContext context;
+    public static HttpClientContext context;
 
     static {
         // 全局请求设置
@@ -57,11 +57,13 @@ public class HttpUtils {
             }
         }
         HttpGet httpget = new HttpGet(url);
+        httpget.getParams().setParameter("charset","utf-8");
         try {
             CloseableHttpResponse response = httpClient.execute(httpget,context);
             HttpEntity entity = response.getEntity();
             if (entity != null) {
-                return EntityUtils.toString(entity);
+                //entityutils默认是用iso__8859_1来解码的。这边需要转码一下。不然返回中文是乱码
+                return new String(EntityUtils.toString(entity).getBytes("ISO_8859_1"),"UTF-8");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -111,6 +113,31 @@ public class HttpUtils {
 //        params.put("uuid","weqjH-Py6w==");
         String res = HttpUtils.get("https://login.weixin.qq.com/qrcode/weqjH-Py6w==",params);
         System.out.println(res);
+    }
+
+    /**
+     * 获取cookieStore
+     * @param url
+     * @param params
+     * @return
+     */
+    public static CookieStore getCookieStore(String url,Map<String,String> params) {
+        System.setProperty("jsse.enableSNIExtension", "false");
+        if(params!=null && params.size() > 0 ){
+            url = url + "?";
+            for(Map.Entry entry : params.entrySet()){
+                url += entry.getKey() + "=" + entry.getValue() + "&";
+            }
+        }
+        HttpGet httpget = new HttpGet(url);
+        try {
+            CloseableHttpResponse response = httpClient.execute(httpget,context);
+            return context.getCookieStore();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 }
 

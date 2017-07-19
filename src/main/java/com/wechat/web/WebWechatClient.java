@@ -5,15 +5,15 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.wechat.inter.APIConstat;
 import com.wechat.redis.RedisUtils;
+import com.wechat.task.CheckIsLoginSuccessTask;
 import com.wechat.task.CheckScanCodeTask;
 import com.wechat.util.HttpUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
+import org.apache.http.cookie.Cookie;
 
 import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,10 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class WebWechatClient {
 
-
-    Lock lock = new ReentrantLock();
-    Condition condition1 = lock.newCondition();
-    Condition condition2 = lock.newCondition();
 
     /**二维码是否过期*/
     private boolean isQrCodeExpired = true;
@@ -48,7 +44,8 @@ public class WebWechatClient {
         this.getQrcode();
         //轮询扫码状态
         Timer timer = new Timer();
-        timer.schedule(new CheckScanCodeTask(this),1,500);
+        timer.schedule(new CheckScanCodeTask(this,timer),1,500);
+        timer.schedule(new CheckIsLoginSuccessTask(this,timer),1,500);
 
     }
 
@@ -75,19 +72,26 @@ public class WebWechatClient {
      * 微信初始化工作
      */
     public void weChatInit(){
-        while(this.isLogin){
-            //这个时候需要重定向到url
+        //这个时候需要重定向到url，然后获取返回的cookie，保存到本地，之后需要用的权限接口需要把这个cookie带过去（返回cookie中的值，最有用的是data_ticket,其他参数具体什么意思，我也不太清楚）
+        CookieStore cookieStore = HttpUtils.getCookieStore(this.getRedirect_uri(),null);
+        saveCookie(cookieStore);
+        //保存cookie之后去获取联系人列表并缓存到redis中
+        String data = HttpUtils.get(APIConstat.GET_CONTACT,null);
+        System.out.println(data);
+        saveUser(data);
+    }
 
-            //这边要设置返回来的cookie到本地，因为微信的接口权限校验会根据cookie中的消息来验证，微信返回的cookie中参数具体是什么意思，我也不太清楚。
 
-            //这边去获取联系人列表并缓存到redis中
-            String data = null;
-            try {
-                data = getData();
-            } catch (IOException e) {
-                e.printStackTrace();
+    /**
+     * 保存cookie到本地
+     * @param cookieStore
+     */
+    private void saveCookie(CookieStore cookieStore){
+        if(cookieStore != null){
+            List<Cookie> cookies = cookieStore.getCookies();
+            for(Cookie cookie : cookies){
+                System.out.println(cookie.getName() + ":" + cookie.getValue() + ":" + cookie.getDomain());
             }
-            saveUser(data);
         }
     }
 
@@ -185,11 +189,9 @@ public class WebWechatClient {
     }
 
     public static void main(String[] args) {
-//        WebWechatClient wwc = new WebWechatClient();
-//        wwc.login();
-//        wwc.weChatInit();
-        HttpUtils.get("http://localhost:8080/platform/api/appUserService?page=0&size=10",null);
-        HttpUtils.get("http://localhost:8080/platform/api/appUserService?page=0&size=10",null);
+        WebWechatClient wwc = new WebWechatClient();
+        wwc.login();
+//        System.out.println(HttpUtils.context.getCookieStore());
     }
 
     public String getUuid() {
