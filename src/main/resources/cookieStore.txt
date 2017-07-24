@@ -1,0 +1,7 @@
+mm_lang:zh_CN:wx.qq.com
+webwx_auth_ticket:CIsBEJPgw6oCGoABf+WbrlnAzuPPEIPk65Yf4ZmgCW34TvDtHr8dUV7ResnzVWm4HFKjLL+Dpp6NHdqv1xcu0Y72hNCojKgX1H53PSv4Y/y8V/HaUiroOIctpgccaLvIYwzLqzTlCwIc9UTAhvvYnGYPZIPxEK7dMavQPvQ3KSNevjTh3y/PGP7jHQ8=:wx.qq.com
+webwx_data_ticket:gSfR4kIBQldD+3iQMZ6yHsqb:qq.com
+webwxuvid:fa340aa1253eecd070251e6f9c798df2689ebec31d867a7650749f45392ac2cb43a7ca88c1e0ae3f6d00cb13ed1e9a29:wx.qq.com
+wxloadtime:1500788774:wx.qq.com
+wxsid:fw4zfsymPEQ5XKEE:wx.qq.com
+wxuin:933014580:wx.qq.com

@@ -45,8 +45,12 @@ public class WebWechatClient {
         //轮询扫码状态
         Timer timer = new Timer();
         timer.schedule(new CheckScanCodeTask(this,timer),1,500);
-        timer.schedule(new CheckIsLoginSuccessTask(this,timer),1,500);
+    }
 
+
+    public void checkLogin(){
+        Timer timer = new Timer();
+        timer.schedule(new CheckIsLoginSuccessTask(this,timer),1,500);
     }
 
 
@@ -77,7 +81,6 @@ public class WebWechatClient {
         saveCookie(cookieStore);
         //保存cookie之后去获取联系人列表并缓存到redis中
         String data = HttpUtils.get(APIConstat.GET_CONTACT,null);
-        System.out.println(data);
         saveUser(data);
     }
 
@@ -88,9 +91,33 @@ public class WebWechatClient {
      */
     private void saveCookie(CookieStore cookieStore){
         if(cookieStore != null){
-            List<Cookie> cookies = cookieStore.getCookies();
-            for(Cookie cookie : cookies){
-                System.out.println(cookie.getName() + ":" + cookie.getValue() + ":" + cookie.getDomain());
+            Properties properties = new Properties();
+            OutputStream os = null;
+            try {
+                os = new FileOutputStream(new File(WebWechatClient.class.getResource("/cookieStore.properties").getPath()));
+                List<Cookie> cookies = cookieStore.getCookies();
+                for(Cookie cookie : cookies){
+                    String name = cookie.getName();
+                    String value = cookie.getValue();
+                    String domain = cookie.getDomain() == null ? "":cookie.getDomain();
+                    String path = cookie.getPath() == null ? "":cookie.getPath();
+                    properties.setProperty(name,value+";"+domain+";"+path);
+                }
+                properties.store(os,new Date().getTime() + "");
+            } catch (FileNotFoundException e) {
+                System.out.println("cookieStore.properties文件不存在");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("保存cookieStore.properties失败");
+                e.printStackTrace();
+            }finally {
+                if(os !=null ){
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -191,7 +218,7 @@ public class WebWechatClient {
     public static void main(String[] args) {
         WebWechatClient wwc = new WebWechatClient();
         wwc.login();
-//        System.out.println(HttpUtils.context.getCookieStore());
+        wwc.checkLogin();
     }
 
     public String getUuid() {

@@ -17,4 +17,6 @@ public interface APIConstat {
 
     public static String GET_CONTACT = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact";
 
+    public static String SEND_MSG = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg";
+
 }

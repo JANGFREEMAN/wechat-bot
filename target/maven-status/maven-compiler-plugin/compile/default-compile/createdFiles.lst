@@ -1,0 +1,10 @@
+com\wechat\inter\APIConstat.class
+com\wechat\web\WebWechatClient.class
+com\wechat\model\User.class
+com\wechat\exception\WeChatException.class
+com\wechat\redis\RedisUtils.class
+com\wechat\web\Client.class
+com\wechat\task\CheckScanCodeTask.class
+com\wechat\web\Client$1.class
+com\wechat\task\SyncCheckTask.class
+com\wechat\util\HttpUtils.class

@@ -46,7 +46,7 @@ public class CheckScanCodeTask extends TimerTask {
                 String redirect_uri =  res.split("\"")[1];
                 webWechatClient.setIsLogin(true);
                 webWechatClient.setRedirect_uri(redirect_uri);
-                this.cancel();
+                timer.cancel();
             }else{
                 try {
                     throw new WeChatException("未知状态码");

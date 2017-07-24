@@ -27,6 +27,7 @@ public class RedisUtils {
      */
     public static void saveUserArr(JSONArray jsonArray){
         Jedis jedis = getJedis();
+        jedis.flushDB();
         for(int i=0 ; i < jsonArray.size() ; i++){
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             String userName = jsonObject.getString("UserName");
