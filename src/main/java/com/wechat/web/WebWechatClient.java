@@ -85,35 +85,43 @@ public class WebWechatClient {
     }
 
 
+    @Override
+    public String toString() {
+        return super.toString();
+    }
+
     /**
      * 保存cookie到本地
      * @param cookieStore
      */
     private void saveCookie(CookieStore cookieStore){
         if(cookieStore != null){
-            Properties properties = new Properties();
-            OutputStream os = null;
+            FileOutputStream fis = null;
             try {
-                os = new FileOutputStream(new File(WebWechatClient.class.getResource("/cookieStore.properties").getPath()));
+                fis = new FileOutputStream(new File(WebWechatClient.class.getResource("/cookieStore.properties").getPath()));
                 List<Cookie> cookies = cookieStore.getCookies();
+                JSONArray jsonArray = new JSONArray();
                 for(Cookie cookie : cookies){
+                    JSONObject jsonObject = new JSONObject();
                     String name = cookie.getName();
                     String value = cookie.getValue();
                     String domain = cookie.getDomain() == null ? "":cookie.getDomain();
                     String path = cookie.getPath() == null ? "":cookie.getPath();
-                    properties.setProperty(name,value+";"+domain+";"+path);
+                    jsonObject.put("name",name);
+                    jsonObject.put("value",value);
+                    jsonObject.put("domain",domain);
+                    jsonObject.put("path",path);
+                    jsonArray.add(jsonObject);
                 }
-                properties.store(os,new Date().getTime() + "");
+                fis.write(jsonArray.toJSONString().getBytes());
             } catch (FileNotFoundException e) {
-                System.out.println("cookieStore.properties文件不存在");
                 e.printStackTrace();
             } catch (IOException e) {
-                System.out.println("保存cookieStore.properties失败");
                 e.printStackTrace();
-            }finally {
-                if(os !=null ){
+            } finally {
+                if(fis !=null ){
                     try {
-                        os.close();
+                        fis.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

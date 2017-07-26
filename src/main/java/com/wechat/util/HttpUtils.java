@@ -1,7 +1,9 @@
 package com.wechat.util;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.wechat.inter.APIConstat;
+import com.wechat.web.WebWechatClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -12,6 +14,8 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
@@ -30,71 +34,50 @@ import java.util.*;
  */
 public class HttpUtils {
 
-    private CookieStore cookieStore;
-    static {
-        // 创建cookie store的本地实例
+//    private static CookieStore cookieStore = getCookieStore();
+
+
+    private static String getCookieStore(){
         CookieStore cookieStore = new BasicCookieStore();
-        Properties properties = new Properties();
-        InputStream in = null;
+        InputStream in = HttpUtils.class.getResourceAsStream("/cookieStore.properties");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        String line = null; // 读取第一行
+        String cookie = "";
         try {
-            in = HttpUtils.class.getResourceAsStream("/cookieStore.properties");
-            properties.load(in);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            line = reader.readLine();
+            StringBuffer buffer = new StringBuffer();
+            while (line != null) { // 如果 line 为空说明读完了
+                buffer.append(line); // 将读到的内容添加到 buffer 中
+                buffer.append("\n"); // 添加换行符
+                line = reader.readLine(); // 读取下一行
+            }
+            JSONArray jsonArray = JSONArray.parseArray(buffer.toString());
+            for(int i = 0 ; i < jsonArray.size() ; i ++){
+                JSONObject jsonObject =  jsonArray.getJSONObject(i);
+                String name = jsonObject.getString("name");
+                String value = jsonObject.getString("value");
+                cookie += name + "=" + value + ";";
+            }
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-            if(in != null){
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
-        Set<Map.Entry<Object, Object>> entrys = properties.entrySet();//返回的属性键值对实体
-        for(Map.Entry<Object, Object> entry:entrys){
-            String name = entry.getKey().toString();
-            String _value = entry.getValue().toString();
-            String value = _value.split(";")[0];
-            String domain = _value.split(";")[1];
-            BasicClientCookie  cookie = new BasicClientCookie(name,value);
-            cookie.setDomain(domain);
-            cookie.setPath("/");
-            cookieStore.addCookie(cookie);
-        }
+        return cookie;
     }
 
 
-
-
-    CloseableHttpResponse res = null;
-
-    private static String GET_METHOD = "GET";
-
-    private static String POST_METHOD = "POST";
-
     public static String get(String url,Map<String,String> params){
-        System.setProperty("jsse.enableSNIExtension", "false");
         DefaultHttpClient  httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(url);
+        System.setProperty("jsse.enableSNIExtension", "false");
         if(params!=null && params.size() > 0 ){
             url = url + "?";
             for(Map.Entry entry : params.entrySet()){
                 url += entry.getKey() + "=" + entry.getValue() + "&";
             }
         }
-        httpGet.getParams().setParameter("charset","utf-8");
-        if(url.equals(APIConstat.GET_CONTACT)){
-            CookieStore cookieStore = httpClient.getCookieStore();
-            List<Cookie> cookies = cookieStore.getCookies();
-            for(Cookie cookie : cookies){
-                System.out.println("name:"+cookie.getName()+"===value:"+cookie.getValue()+"=====domain:"+cookie.getDomain());
-            }
-        }
-
+        HttpGet httpGet = new HttpGet(url);
         try {
-            CloseableHttpResponse response = httpClient.execute(httpGet);
+            httpGet.setHeader("Cookie",getCookieStore());
+            HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 //entityutils默认是用iso__8859_1来解码的。这边需要转码一下。不然返回中文是乱码
@@ -116,6 +99,7 @@ public class HttpUtils {
             }
         }
         HttpPost post = new HttpPost(url);
+        post.setHeader("Cookie",getCookieStore());
         try {
             System.out.println(json);
             StringEntity s = new StringEntity(json);
@@ -170,7 +154,6 @@ public class HttpUtils {
 //        params.put("_",String.valueOf(new Date().getTime()));
 //        String res = HttpUtils.get("https://login.weixin.qq.com/jslogin",params);
 //        System.out.println(res);
-
 
         //获取二维码图片
         Map<String,String> params = new HashMap<String, String>();
